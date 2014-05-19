@@ -394,7 +394,7 @@ static void split_comms_3dto2d(
 
 
 void PX(execute_remap_3dto2d)(
-    remap_3dto2d_plan ths
+    remap_3dto2d_plan ths, R * plannedin, R * plannedout, R * in, R * out
     )
 {
   if(ths==NULL)
@@ -424,7 +424,7 @@ void PX(execute_remap_3dto2d)(
 // #endif
   
   /* execute all initialized plans */
-  PX(execute_sertrafo)(ths->local_transp[0]);
+  PX(execute_sertrafo)(ths->local_transp[0], plannedin, plannedout, in, out);
 
 // #if PFFT_DEBUG_GVARS 
 //   local_N[0] = 512/p0; local_N_start[0] = 0;
@@ -452,7 +452,7 @@ void PX(execute_remap_3dto2d)(
 //         }
 // #endif
 
-  PX(execute_gtransp)(ths->global_remap[0]);
+  PX(execute_gtransp)(ths->global_remap[0], plannedin, plannedout, in, out);
 
 // #if PFFT_DEBUG_GVARS 
 //   local_N[0] = 512/p0; local_N_start[0] = 0;
@@ -480,7 +480,7 @@ void PX(execute_remap_3dto2d)(
 //         }
 // #endif
   
-  PX(execute_gtransp)(ths->global_remap[1]);
+  PX(execute_gtransp)(ths->global_remap[1], plannedin, plannedout, in, out);
 
 // #if PFFT_DEBUG_GVARS 
 //   local_N[0] = 512/p0/q0; local_N_start[0] = 0;
@@ -508,7 +508,7 @@ void PX(execute_remap_3dto2d)(
 //         }
 // #endif
   
-  PX(execute_sertrafo)(ths->local_transp[1]);
+  PX(execute_sertrafo)(ths->local_transp[1], plannedin, plannedout, in, out);
 }
 
 static remap_3dto2d_plan remap_3dto2d_mkplan(
