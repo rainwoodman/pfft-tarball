@@ -23,7 +23,8 @@ check_PROGRAMS = \
 check_PROGRAMS += \
 	simple_check_c2c simple_check_c2c_transposed \
 	simple_check_r2c simple_check_r2c_transposed \
-	simple_check_r2r simple_check_r2r_transposed
+	simple_check_r2r simple_check_r2r_transposed \
+	simple_check_c2c_newarray
 
 
 
