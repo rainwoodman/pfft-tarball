@@ -35,7 +35,8 @@
 
 static void execute_transposed(
     int rnk_pm, outrafo_plan *trafos, gtransp_plan *remaps,
-    double *timer_trafo, double *timer_remap);
+    double *timer_trafo, double *timer_remap, R * plannedin, R * plannedout, 
+    R * in, R * out);
 
 
 static INT plain_index(
@@ -746,8 +747,8 @@ PX(plan) PX(plan_r2r)(
 
 /* functions to execute and destroy PX(plan) */
 
-void PX(execute)(
-    PX(plan) ths
+static void PX(execute_full)(
+    PX(plan) ths, R * in, R * out
     )
 {
   int r;
@@ -770,43 +771,84 @@ void PX(execute)(
   ths->timer->whole -= MPI_Wtime();
 
   ths->timer->remap_3dto2d[0] -= MPI_Wtime(); 
-  PX(execute_remap_3dto2d)(ths->remap_3dto2d[0]);
+  PX(execute_remap_3dto2d)(ths->remap_3dto2d[0], ths->in, ths->out, in, out);
   ths->timer->remap_3dto2d[0] += MPI_Wtime(); 
 
   execute_transposed(r, ths->serial_trafo, ths->global_remap,
-      ths->timer->trafo, ths->timer->remap);
+      ths->timer->trafo, ths->timer->remap, ths->in, ths->out, in, out);
 
   execute_transposed(r, &ths->serial_trafo[r+1], &ths->global_remap[r],
-      &ths->timer->trafo[r+1], &ths->timer->remap[r]);
+      &ths->timer->trafo[r+1], &ths->timer->remap[r], ths->in, ths->out, in, out);
   
   ths->timer->remap_3dto2d[1] -= MPI_Wtime(); 
-  PX(execute_remap_3dto2d)(ths->remap_3dto2d[1]);
+  PX(execute_remap_3dto2d)(ths->remap_3dto2d[1], ths->in, ths->out, in, out);
   ths->timer->remap_3dto2d[1] += MPI_Wtime(); 
 
   ths->timer->iter++;
   ths->timer->whole += MPI_Wtime();
 }
 
+void PX(execute)(
+    PX(plan) ths
+    )
+{
+    PX(execute_full)(ths, ths->in, ths->out);
+}
+
+void PX(execute_dft)(
+    PX(plan) ths,
+    C * in, C * out
+    )
+{
+    PX(execute_full)(ths, (R*) in, (R*) out);
+}
+
+
+void PX(execute_dft_r2c)(
+    PX(plan) ths,
+    R * in, C * out
+    )
+{
+    PX(execute_full)(ths, (R*)in, (R*)out);
+}
+
+void PX(execute_dft_c2r)(
+    PX(plan) ths,
+    C * in, R * out
+    )
+{
+    PX(execute_full)(ths, (R*)in, (R*)out);
+}
+
+void PX(execute_dft_r2r)(
+    PX(plan) ths,
+    R * in, R * out
+    )
+{
+    PX(execute_full)(ths, in, out);
+}
 
 static void execute_transposed(
     int rnk_pm, outrafo_plan *trafos, gtransp_plan *remaps,
-    double *timer_trafo, double *timer_remap
+    double *timer_trafo, double *timer_remap,
+    R * plannedin, R * plannedout,
+    R * in, R * out
     )
 {
   int t;
   
   for(t=0; t<rnk_pm; t++){
     timer_trafo[t] -= MPI_Wtime();
-    PX(execute_outrafo)(trafos[t]);
+    PX(execute_outrafo)(trafos[t], plannedin, plannedout, in, out);
     timer_trafo[t] += MPI_Wtime();
 
     timer_remap[t] -= MPI_Wtime();
-    PX(execute_gtransp)(remaps[t]);
+    PX(execute_gtransp)(remaps[t], plannedin, plannedout, in, out);
     timer_remap[t] += MPI_Wtime();
   }
   
   timer_trafo[t] -= MPI_Wtime();
-  PX(execute_outrafo)(trafos[t]);
+  PX(execute_outrafo)(trafos[t], plannedin, plannedout, in, out);
   timer_trafo[t] += MPI_Wtime();
 }
 
